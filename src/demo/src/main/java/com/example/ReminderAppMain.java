@@ -243,7 +243,8 @@ public class ReminderAppMain {
         .POST(HttpRequest.BodyPublishers.ofString(json.toString()))
         .build();
     HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-    // כדי שיתמקפל חייב לעשות import kong.unirest.HttpResponse;
+    // כדי שיתמקפל חייב לעשות import java.net.http.HttpResponse;
+    // ולא של יונירסט
     // אבל לא נותן כי יש שימוש בספריית יונירסט וספריית okhttp
     // באותה המחלקה מה שמגביל את השימוש בתחביר מסוג אחד.
 
