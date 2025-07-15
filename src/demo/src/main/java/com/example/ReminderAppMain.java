@@ -1,6 +1,10 @@
 package com.example;
 
 import java.net.IDN;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
@@ -131,9 +135,15 @@ public class ReminderAppMain {
   }
 
   // פונקציה שתחזיר את מספר השגיאה אם קרתה ואם לא ידפיס שההרשמה הצליחה
-  public static Integer register(String id) {
+  public static Integer register(String id) { // UNIREST
+    // בקשת פוסט:
     try {
       // נשלח מפה עם הפרמטרים שאנחנו רוצים לשלוח:
+
+      // ביונירס לא צריך לעשות קודם מחרוזת גייסון במבנה המתאים מהאובייקט כדי לשלוח את
+      // מה שרוצים בבקשת פוסט. מספיק לעשות מפה של הפרמטרים (כמו באובג׳קט מאפר רק קצר
+      // יותר) ולהכניס למפה כמו שמכניסים לגייסון ואת המפה שולחים בבקשה של יונירסט. זה
+      // כאילט מפת הפרמטרים של אובייקט הגייסון כמחרוזת.
       Map<String, Object> params = new HashMap<>();
       params.put("id", id);
 
@@ -142,6 +152,8 @@ public class ReminderAppMain {
           .post("https://app.seker.live/fm1/register") // post
           .queryString(params)
           .asString();
+
+      // ״גט״ למה שהכנסנו - לברות אם הצליח
       JSONObject jsonObject = new JSONObject(response.getBody());
       boolean success = jsonObject.getBoolean("success"); // תשיג את הערך הבוליאני של המפתח ״סקסס״
       if (success) {
@@ -209,4 +221,44 @@ public class ReminderAppMain {
     }
   }
 
+  //////////////////////////////////////////////////////////////
+
+  // איך היינו עושים את הפונקציה הראשונה (רג׳יסטר -פוסט) ב OkHttp:
+
+  public static Integer register2(String id) { // OKHTTP
+    // בקשת פוסט:
+    String relevant = "register";
+    String apiUrl = "https://app.seker.live/fm1" + relevant;
+    // OR:
+    apiUrl = "https://app.seker.live/fm1/register"; // or /get-tasks (מה שצריך)
+
+    // ניצור אובייקט גייסון שיתאים למבנה של השרת ונשים בו את מה שנרצה לשלוח:
+    JSONObject json = new JSONObject();
+    json.put("id", id);
+
+    HttpClient client = HttpClient.newHttpClient();
+    HttpRequest request = HttpRequest.newBuilder()
+        .uri(URI.create(apiUrl))
+        .header("Content-Type", "application/json")
+        .POST(HttpRequest.BodyPublishers.ofString(json.toString()))
+        .build();
+    HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+    // כדי שיתמקפל חייב לעשות import kong.unirest.HttpResponse;
+    // אבל לא נותן כי יש שימוש בספריית יונירסט וספריית okhttp
+    // באותה המחלקה מה שמגביל את השימוש בתחביר מסוג אחד.
+
+    // ״גט״ למה שהכנסנו - לבדוק אם הצליח (נחזיר את הקוד)
+    JSONObject jsonObject = new JSONObject(response.getBody());
+    boolean success = jsonObject.getBoolean("success"); // תשיג את הערך הבוליאני של המפתח ״סקסס״
+    if (success) {
+      return null;
+    } else {
+      Integer errorCode = jsonObject.getInt("errorCode");
+      return errorCode;
+    }
+  }
+  // ביונירס לא צריך לעשות קודם מחרוזת גייסון במבנה המתאים מהאובייקט כדי לשלוח את
+  // מה שרוצים בבקשת פוסט. מספיק לעשות מפה של הפרמטרים (כמו באובג׳קט מאפר רק קצר
+  // יותר) ולהכניס למפה כמו שמכניסים לגייסון ואת המפה שולחים בבקשה של יונירסט. זה
+  // כאילט מפת הפרמטרים של אובייקט הגייסון כמחרוזת.
 }
